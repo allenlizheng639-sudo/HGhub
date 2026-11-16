@@ -16,7 +16,9 @@ try {
   if (!ready) throw new Error("Vite smoke-test server did not start");
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
-  page.on("console", message => { if (message.type() === "error") process.stderr.write(message.text() + "\\n"); });
+  page.on("console", message => { if (message.type() === "error") process.stderr.write("[browser console] " + message.text() + "\\n"); });
+  page.on("pageerror", error => process.stderr.write("[browser pageerror] " + (error.stack || error.message) + "\\n"));
+  page.on("worker", worker => process.stderr.write("[browser worker] " + worker.url() + "\\n"));
   await page.goto("http://127.0.0.1:1420/tests/quickjs-worker-smoke.html");
   await page.waitForFunction(() => document.documentElement.dataset.result === "pass" || document.documentElement.dataset.result === "fail", undefined, { timeout: 15000 });
   const result = await page.locator("#result").textContent();
