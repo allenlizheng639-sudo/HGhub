@@ -23,6 +23,20 @@ Web 版优先采用 `quickjs-emscripten`（QuickJS 编译为 WebAssembly）作�
 | native bridge | 只注入 HPP 明确允许的 host 函数；网络、存储、Cookie、加密、日志由宿主实现 |
 | module loader | 禁止任意文件/网络模块导入，只允许插件包内经校验的模块 |
 
+## 已核查的 HPP bridge 范围
+
+读取当前分支的 `prelude.js`、`native.rs` 和 `network.rs` 后，Web runtime 不能只实现一个 `fetch` 函数。现有宿主接口至少包含以下同步能力：
+
+- 编码：`codec.utf8Encode`、`codec.decodeText`、`codec.base64Encode/Decode`、`codec.hexEncode/Decode`
+- 加密：`crypto.randomUUID`、`crypto.randomBytes`、`crypto.digest`、`crypto.hmac`、`crypto.rsaEncrypt`、`crypto.aesEncrypt/Decrypt`
+- URL：`url.parse`、`url.set`、`url.queryParse`、`url.queryEncode`
+- HTML：`html.parse`、`html.node`（当前原生端基于 dom_query 的文档/节点句柄管理）
+- 环境与日志：`env`、`log`
+
+异步 HPP API 还覆盖网络请求、Cookie、插件存储、定时器/休眠、页面 DOM 查询、内容详情/搜索/分类/直播/解析/片库等操作。具体网络请求和存储由插件作用域隔离；Cookie jar 绑定 provider，而不是浏览器全局 Cookie。
+
+因此 Web 版必须把 HPP prelude 的同步 native bridge 与异步 request/response 消息通道一起移植。仅把 Rust 的网络请求换成浏览器 `fetch`，会丢失 provider Cookie 隔离、重定向/目标校验、请求速率、取消和媒体资源会话语义。
+
 ## 必须验证的兼容性风险
 
 1. 现有插件依赖的 JS 语言特性、模块格式、全局对象与 QuickJS WASM 版本是否一致。
