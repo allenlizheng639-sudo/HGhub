@@ -1,4 +1,5 @@
-import { getQuickJS } from "quickjs-emscripten";
+import { newQuickJSWASMModuleFromVariant } from "quickjs-emscripten-core";
+import variant from "@jitl/quickjs-singlefile-browser-release-sync";
 
 type QuickJsRequest = {
   id: string;
@@ -12,14 +13,16 @@ type WorkerPort = {
   postMessage(value: unknown): void;
 };
 const port = self as unknown as WorkerPort;
+let quickJsModulePromise: ReturnType<typeof newQuickJSWASMModuleFromVariant> | undefined;
 
 port.onmessage = async (event) => {
   const request = event.data;
   if (!request || typeof request.id !== "string") return;
   try {
-    // The package resolves to its browser ESM build and embeds the WASM bytes;
-    // Vite bundles this worker and the runtime locally (no CDN or runtime URL).
-    const quickJsModule = await getQuickJS();
+    // Explicit browser single-file variant embeds WASM bytes in this worker bundle.
+    // This avoids resolving a separate .wasm URL relative to the app's route.
+    quickJsModulePromise ??= newQuickJSWASMModuleFromVariant(variant);
+    const quickJsModule = await quickJsModulePromise;
     const deadline = performance.now() + Math.max(50, Math.min(request.timeoutMs, 5000));
     const value = quickJsModule.evalCode(request.source, {
       memoryLimitBytes: Math.max(1024 * 1024, Math.min(request.memoryLimitBytes, 64 * 1024 * 1024)),
