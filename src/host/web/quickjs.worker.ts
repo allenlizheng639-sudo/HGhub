@@ -19,6 +19,12 @@ type WorkerPort = {
 const port = self as unknown as WorkerPort;
 let quickJsModulePromise: ReturnType<typeof newQuickJSWASMModuleFromVariant> | undefined;
 
+function resolveModuleSource(sources: Record<string, string>, name: string): string {
+  const normalized = name.replace(/^\.\//, "");
+  const source = sources[name] ?? sources[normalized] ?? sources["./" + normalized];
+  if (typeof source !== "string") throw new Error("HPP import is not allowlisted: " + name);
+  return source;
+}
 function unpackTransfer(value: any): any {
   if (!value || typeof value !== "object" || typeof value.t !== "string") throw new Error("Invalid HPP transfer value");
   switch (value.t) {
@@ -48,11 +54,7 @@ function runHppInstall(quickJsModule: any, request: QuickJsRequest, memoryLimitB
   runtime.setMaxStackSize(maxStackSizeBytes);
   runtime.setInterruptHandler(() => performance.now() >= deadline);
   runtime.setModuleLoader((name: string) => {
-    const sources = request.modules ?? {};
-    if (!Object.prototype.hasOwnProperty.call(sources, name) || typeof sources[name] !== "string") {
-      throw new Error("HPP import is not allowlisted: " + name);
-    }
-    return sources[name];
+    return resolveModuleSource(request.modules ?? {}, name);
   });
   const context = runtime.newContext();
   try {
@@ -149,10 +151,7 @@ port.onmessage = async (event) => {
       runtime.setMaxStackSize(maxStackSizeBytes);
       runtime.setInterruptHandler(() => performance.now() >= deadline);
       runtime.setModuleLoader((name) => {
-        if (!Object.prototype.hasOwnProperty.call(sources, name) || typeof sources[name] !== "string") {
-          throw new Error(`HPP import is not allowlisted: ${name}`);
-        }
-        return sources[name];
+        return resolveModuleSource(sources, name);
       });
       const context = runtime.newContext();
       try {
