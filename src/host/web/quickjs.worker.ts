@@ -80,7 +80,7 @@ function runHppInstall(quickJsModule: any, request: QuickJsRequest, memoryLimitB
     context.setProp(context.global, "__hppFinish", finish);
     finish.dispose();
 
-    const preludeSource = "globalThis.__hppApi = " + hppPrelude.trim().replace(/;\\s*$/, "");
+    const preludeSource = "globalThis.__hppApi = " + hppPrelude.trim();
     const preludeResult = context.evalCode(preludeSource, "prelude.js", { type: "global" });
     if (preludeResult.error) throw context.dump(preludeResult.error);
     preludeResult.value.dispose();
