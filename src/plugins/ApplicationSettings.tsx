@@ -4,7 +4,7 @@ import { IBack, IChevR, IGrid, ISettings, IMoon, ISun, IVolMute, IPlayF, IRefres
 import type { ReactNode } from "react";
 import { Toggle } from "../components/ui";
 import { useEffect, useRef, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { hostAdapter } from "../host/adapter";
 import { checkAppUpdate, type AppRelease } from "../appUpdates";
 import { useStore } from "../store";
 import { APP_VERSION } from "../environment";
@@ -93,7 +93,7 @@ function AppUpdateSetting() {
   const open = async () => {
     if (!release || opening) return;
     setOpening(true); setError("");
-    try { await invoke<void>("open_url", { url: release.url }); }
+    try { await hostAdapter.invoke<void>("open_url", { url: release.url }); }
     catch { setError("无法打开浏览器，请重试"); }
     finally { setOpening(false); }
   };
