@@ -23,5 +23,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: pnpm exec playwright install chromium --with-deps
+      - run: pnpm exec playwright-core install chromium --with-deps
       - run: node scripts/test-quickjs-worker.mjs
