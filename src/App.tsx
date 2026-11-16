@@ -21,14 +21,13 @@ import "./plugins/legacy-adapter.css";
 import "./plugins/watch-experience.css";
 import ImmersiveHome from "./plugins/ImmersiveHome";
 import { runBack } from "./back";
-import { addPluginListener } from "@tauri-apps/api/core";
 import { hostAdapter } from "./host/adapter";
 export default function App() { return <HostProvider><Application/></HostProvider>; }
 function Application() {
   const app=useStore(),host=useHost(),[collapsed,setCollapsed]=useState(false),top=app.stack[app.stack.length-1];
   const backRef=useRef(()=>{});
-  backRef.current=()=>{if(runBack(10))return;if(app.fs){app.setFs(false);return;}if(document.fullscreenElement){void document.exitFullscreen();return;}if(runBack())return;if(app.stack.length)app.pop();else if(app.tab!=="home")app.setTab("home");else void hostAdapter.invoke("plugin:app|exit",{code:0}).catch(()=>{});};
-  useEffect(()=>{if(app.platform!=="android")return;let disposed=false;let listener:{unregister:()=>Promise<void>}|undefined;void addPluginListener("app","back-button",()=>backRef.current()).then(l=>{if(disposed)void l.unregister();else listener=l;}).catch(()=>{});return()=>{disposed=true;void listener?.unregister();};},[app.platform]);
+  backRef.current=()=>{if(runBack(10))return;if(app.fs){app.setFs(false);return;}if(document.fullscreenElement){void document.exitFullscreen();return;}if(runBack())return;if(app.stack.length)app.pop();else if(app.tab!=="home")app.setTab("home");else if(hostAdapter.kind==="tauri")void hostAdapter.invoke("plugin:app|exit",{code:0}).catch(()=>{});};
+  useEffect(()=>{if(hostAdapter.kind!=="tauri"||app.platform!=="android")return;let disposed=false;let listener:{unregister:()=>Promise<void>}|undefined;void import("@tauri-apps/api/core").then(({addPluginListener})=>addPluginListener("app","back-button",()=>backRef.current())).then(l=>{if(disposed)void l.unregister();else listener=l;}).catch(()=>{});return()=>{disposed=true;void listener?.unregister();};},[app.platform]);
   const manage=(focusId?:string)=>{host.clearAuth();app.push({kind:"plugins",focusId});};
   const open=(pluginId:string,mediaId:string)=>app.push({kind:"media",pluginId,mediaId});
   useEffect(()=>{const fn=(e:KeyboardEvent)=>{
