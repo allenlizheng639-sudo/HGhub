@@ -38,7 +38,7 @@ function runWorker<T>(payload: Record<string, unknown>, limits: QuickJsLimits): 
       if (error) reject(error); else resolve(value as T);
     };
     const timer = window.setTimeout(() => finish(new Error("QuickJS 执行超时，运行 Worker 已终止")), timeoutMs + 1500);
-    worker.onerror = event => finish(new Error(event.message || "QuickJS Worker 启动失败"));
+    worker.onerror = event => finish(new Error([event.message, event.filename, event.lineno ? "line " + event.lineno : "", event.colno ? "column " + event.colno : ""].filter(Boolean).join(" · ") || "QuickJS Worker 启动失败"));
     worker.onmessage = event => {
       const message = event.data as WorkerReply;
       if (message?.id !== id) return;
