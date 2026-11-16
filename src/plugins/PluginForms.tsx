@@ -117,7 +117,7 @@ export default function PluginForms({ plugin }: { plugin: InstalledPlugin }) {
     {hasUi && <div className="hpp-actions"><h3>插件操作</h3>{actionsError && <p role="alert" className="hpp-error">{actionsError}</p>}<div className="hpp-form-actions">{actions.map(a => <div key={a.id}><button disabled={busy || loading} onClick={() => choose({ ...a, kind: "ui" })}>{a.label}</button>{a.description && <p className="hpp-muted">{a.description}</p>}</div>)}</div></div>}
     {loading && <p role="status" className="hpp-muted">正在读取账号与操作…</p>}
     {(accountError || actionsError) && <button disabled={loading || busy} onClick={() => setRefresh(n => n + 1)}>重新读取账号与操作</button>}
-    {target && <form className="hpp-form" aria-label={target.form?.title || target.label} onSubmit={e => { e.preventDefault(); if (!busy && !missingRequired) void submit(target, values); }}>
+    {target && <form className="hpp-form" aria-label={target.form?.title || target.label} onSubmit={(e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); if (!busy && !missingRequired) void submit(target, values); }}>
       <h3>{target.form?.title || target.label}</h3>{target.form?.description && <p className="hpp-muted">{target.form.description}</p>}
       {target.form?.fields.map((field, i) => {
         const id = `${fieldId}-${i}`, value = values[field.key] ?? "";
