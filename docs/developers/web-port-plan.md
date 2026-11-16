@@ -83,3 +83,13 @@ Next: finish the remaining Tauri-only import/command audit and native regression
 - `pnpm install --frozen-lockfile` and `pnpm build` both completed successfully.
 - This verifies TypeScript compilation and the existing Vite production bundle only; it does not verify browser host features, plugin execution, or media playback.
 - The first CI attempt exposed two missed `invoke` call sites and two existing implicit-event typing errors. Those were corrected, and the latest run is green.
+
+
+### QuickJS dependency and Worker bundle (2026-11-16)
+
+- Pinned `quickjs-emscripten@0.32.0` in `package.json`; GitHub Actions regenerated and committed the lockfile (`82fa9b3f`).
+- The Worker now imports `getQuickJS` from the package directly. Its browser ESM build embeds WASM bytes and is bundled locally by Vite; no runtime CDN or manually maintained vendor wrapper is required.
+- The isolated evaluation entrypoint passes 64 MiB memory, 1 MiB stack, and a bounded interrupt deadline into QuickJS; the parent watchdog can terminate the Worker if it does not respond.
+- CI verified the production build for commit `426faacb59150fa4018d483e22333a23167f7850` after dependency/lockfile generation. This is a build check, not a Safari runtime test.
+- The build workflow has been restored to `pnpm install --frozen-lockfile`; lockfile reproducibility is checked again on each push.
+- Still not implemented: HPP prelude and module factory, native sync bridge, async request/response bridge, provider-scoped storage/Cookies, media/session proxy, and plugin lifecycle integration. The QuickJS spike remains disconnected from production `pluginCommand`.
