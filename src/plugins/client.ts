@@ -42,7 +42,7 @@ export function onPluginAuthSuccess(listener: (id: string) => void) {
 export async function pluginCommand<T>(action: string, params: Record<string, unknown> = {}, options: { notifyAuth?: boolean } = {}): Promise<T> {
   try {
     await ensureMediaCapabilities();
-    const result = await invoke<T>("hpp_manage", { action, params });
+    const result = await hostAdapter.invoke<T>("hpp_manage", { action, params });
     if (["updates.startup", "updates.tick", "updates.install"].includes(action) && (result as { changed?: boolean })?.changed) window.dispatchEvent(new Event("hpp.changed"));
     if (["updates.check", "updates.policy.set", "updates.install", "updates.dismiss", "subscriptions.save", "subscriptions.remove"].includes(action)) window.dispatchEvent(new Event("hpp.updates.changed"));
     if (["import", "enable", "retry", "remove", "restore", "distribution.apply", "settings.set", "endpoint.set", "endpoint.list"].includes(action)) window.dispatchEvent(new Event("hpp.changed"));
@@ -61,7 +61,7 @@ export async function pluginCommand<T>(action: string, params: Record<string, un
     throw error;
   }
 }
-export function openPluginLink(url: string) { return invoke<void>("open_url", { url }); }
+export function openPluginLink(url: string) { return hostAdapter.invoke<void>("open_url", { url }); }
 export function pluginError(error: unknown): string {
   if (error && typeof error === "object" && "message" in error) return String(error.message);
   return typeof error === "string" ? error : "插件操作失败";
