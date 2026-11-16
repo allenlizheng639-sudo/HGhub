@@ -72,6 +72,7 @@ Next: finish the remaining Tauri-only import/command audit and native regression
 - Routed startup diagnostics through `HostAdapter`; browser mode no longer attempts the native debug-log command.
 - Browser mode now skips native `app_boot` security initialization and reports that server-side security settings are not yet available rather than calling a missing native command.
 - Android back-button listener loading is now lazy and guarded by `hostAdapter.kind === "tauri"`; Safari no longer imports or initializes the Tauri app listener. The browser back action also no longer attempts to exit a native app.
+- Web host now implements safe browser-native `open_url` (HTTP/HTTPS only, new window detached from opener) and bounded console diagnostics; unsupported native commands report the protocol-level `UNSUPPORTED` code.
 - GitHub Actions run for commit `404de3252c1369a13994378be068137c5bb1ef81`: **success** (`pnpm install --frozen-lockfile` and `pnpm build`).
 - This is still a frontend compatibility milestone only. The full IPC call-site audit, native build regression check, Web plugin runtime, Worker API, media proxy, and Safari playback validation remain outstanding.
 
