@@ -5,6 +5,13 @@ export interface QuickJsLimits {
 }
 export interface QuickJsResult { value: unknown }
 export interface QuickJsModuleResult { exports: unknown }
+export interface HppPluginInstallConfig {
+  meta: Record<string, unknown>;
+  settings?: Record<string, unknown>;
+  endpoint?: unknown;
+  media?: unknown;
+}
+export interface HppPluginInstallResult { meta: unknown; methods: string[] }
 export class QuickJsRuntimeUnavailable extends Error {
   readonly code = "UNSUPPORTED";
   constructor(message: string) { super(message); this.name = "QuickJsRuntimeUnavailable"; }
@@ -74,4 +81,27 @@ export async function evaluateHppModule(
     throw new TypeError("HPP 模块依赖超出允许范围");
   }
   return { exports: await runWorker<unknown>({ mode: "module", source, modules }, limits) };
+}
+
+/**
+ * Runs the repository HPP prelude and validates a plugin factory inside the
+ * isolated QuickJS runtime. Only env/log sync bridge calls are currently
+ * implemented; plugin network, crypto, storage and media calls remain disabled.
+ */
+export async function evaluateHppPluginInstall(
+  source: string,
+  config: HppPluginInstallConfig,
+  modules: Record<string, string> = {},
+  limits: QuickJsLimits = {},
+): Promise<HppPluginInstallResult> {
+  if (typeof source !== "string" || source.length > 2 * 1024 * 1024) {
+    throw new TypeError("HPP 插件源码无效或超过 2 MiB");
+  }
+  const entries = Object.entries(modules);
+  if (entries.length > 64 || entries.some(([name, code]) =>
+    !name || name.length > 256 || typeof code !== "string" || code.length > 2 * 1024 * 1024
+  )) {
+    throw new TypeError("HPP 模块依赖超出允许范围");
+  }
+  return await runWorker<HppPluginInstallResult>({ mode: "hpp-install", source, modules, config }, limits);
 }
