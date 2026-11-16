@@ -65,7 +65,7 @@
 - No Web plugin execution, persistent plugin storage, authenticated command API, media proxy, or Pages deployment is implemented yet.
 - Build status: not verified in this environment. The new GitHub Actions workflow has been committed, but no run result has been observed yet.
 
-Next: audit every remaining Tauri-only import and host command, then implement and test the browser host API and isolated plugin runtime before enabling Pages.
+Next: finish the remaining Tauri-only import/command audit and native regression check. The QuickJS WASM candidate and the native bridge operation inventory are documented in [web-runtime-spike.md](./web-runtime-spike.md); implement that spike as an isolated test harness before connecting it to the application. The browser host API, Worker, media proxy, and Pages deployment remain blocked until their security and compatibility tests pass.
 
 ### Host boundary follow-up (2026-11-16)
 
