@@ -4,7 +4,7 @@
 <body>
   <pre id="result">running</pre>
   <script type="module">
-    import { evaluateQuickJs, evaluateHppModule } from "../src/host/web/quickjsRuntime.ts";
+    import { evaluateQuickJs, evaluateHppModule, evaluateHppPluginInstall } from "../src/host/web/quickjsRuntime.ts";
     const output = document.querySelector("#result");
     try {
       const basic = await evaluateQuickJs("40 + 2");
@@ -21,11 +21,18 @@
         denied = /allowlisted|not found|module/i.test(String(error?.message || error));
       }
       if (!denied) throw new Error("unlisted HPP module import was not denied");
+      const installed = await evaluateHppPluginInstall(
+        'export const meta = { id: "smoke.resolver", version: "1.0.0", kind: "resolver" }; export default function factory() { return { resolver: { resolve() { return {}; } } }; }',
+        { meta: { id: "smoke.resolver", version: "1.0.0", kind: "resolver" } },
+      );
+      if (installed.meta?.id !== "smoke.resolver" || !installed.methods.includes("resolver.resolve")) {
+        throw new Error("HPP prelude did not validate the resolver plugin factory");
+      }
       let interrupted = false;
       try { await evaluateQuickJs("while (true) {}", { timeoutMs: 100 }); }
       catch (error) { interrupted = /interrupt|timeout|InternalError/i.test(String(error?.message || error)); }
       if (!interrupted) throw new Error("infinite loop was not interrupted");
-      output.textContent = "PASS: eval; HPP module imports; import allowlist; interrupt";
+      output.textContent = "PASS: eval; HPP module imports; import allowlist; HPP prelude/factory; interrupt";
       document.documentElement.dataset.result = "pass";
     } catch (error) {
       output.textContent = "FAIL: " + String(error?.stack || error);
