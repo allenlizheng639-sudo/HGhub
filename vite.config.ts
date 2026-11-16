@@ -9,6 +9,8 @@ const { version } = JSON.parse(
 ) as { version: string };
 
 export default defineConfig({
+  // GitHub Pages serves this repository under /HGhub/; local and other hosts use root.
+  base: process.env.GITHUB_ACTIONS ? "/HGhub/" : "/",
   plugins: [react(), tailwindcss()],
   clearScreen: false,
   // 版本号只维护 package.json（CI 会按 tag 改写它），界面里的版本由这里注入，避免写死后漂移
