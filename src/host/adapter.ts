@@ -35,8 +35,9 @@ class WebHostAdapter implements HostAdapter {
       if (target.protocol !== "https:" && target.protocol !== "http:") {
         throw new Error("只允许打开 HTTP 或 HTTPS 链接");
       }
-      const opened = window.open(target.href, "_blank", "noopener,noreferrer");
+      const opened = window.open(target.href, "_blank");
       if (!opened) throw new Error("浏览器阻止了新窗口，请允许打开外部链接");
+      opened.opener = null;
       return undefined as T;
     }
     const error = new Error(
