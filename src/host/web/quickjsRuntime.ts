@@ -2,7 +2,6 @@ export interface QuickJsLimits {
   timeoutMs?: number;
   memoryLimitBytes?: number;
   maxStackSizeBytes?: number;
-  moduleUrl?: string;
 }
 export interface QuickJsResult { value: unknown }
 export class QuickJsRuntimeUnavailable extends Error {
@@ -19,11 +18,6 @@ export async function evaluateQuickJs(source: string, limits: QuickJsLimits = {}
   if (typeof Worker === "undefined") throw new QuickJsRuntimeUnavailable("当前浏览器不支持 Web Worker");
   if (typeof source !== "string" || source.length > 2 * 1024 * 1024) {
     throw new TypeError("插件测试代码无效或超过 2 MiB");
-  }
-  const moduleUrl = limits.moduleUrl || `${import.meta.env.BASE_URL}vendor/quickjs-emscripten.mjs`;
-  const resolved = new URL(moduleUrl, window.location.href);
-  if (resolved.origin !== window.location.origin) {
-    throw new QuickJsRuntimeUnavailable("QuickJS WASM 必须从当前站点同源加载");
   }
   const timeoutMs = Math.max(50, Math.min(limits.timeoutMs ?? 1000, 5000));
   const worker = new Worker(new URL("./quickjs.worker.ts", import.meta.url), { type: "module", name: "hghub-quickjs-spike" });
@@ -46,7 +40,7 @@ export async function evaluateQuickJs(source: string, limits: QuickJsLimits = {}
       else finish(new Error(message.error?.message || "QuickJS 执行失败"));
     };
     worker.postMessage({
-      id, moduleUrl: resolved.href, source, timeoutMs,
+      id, source, timeoutMs,
       memoryLimitBytes: limits.memoryLimitBytes ?? 64 * 1024 * 1024,
       maxStackSizeBytes: limits.maxStackSizeBytes ?? 1024 * 1024,
     });
