@@ -53,3 +53,16 @@
 ## 当前阻塞
 
 本仓库的 Tauri IPC 和 Rust/QuickJS 宿主没有可直接复用的浏览器实现。Cloudflare Worker 的默认 Hello World 也不是后端。下一项实际工程工作是阶段 A：梳理并抽象前端 IPC 边界；在完成该适配前，不应发布一个会误导用户的“可用”Pages 地址。
+
+## Implementation log
+
+### First HostAdapter pass (2026-11-16)
+
+- Added `src/host/adapter.ts` with an explicit Tauri adapter and a fail-closed browser adapter.
+- Routed plugin IPC, application startup/security settings, external-link opening, desktop exit, and orientation requests through the adapter.
+- Added a branch-scoped frontend build workflow at `.github/workflows/web-port-build.yml`.
+- The browser adapter intentionally reports `HOST_CAPABILITY_UNAVAILABLE`; this is a migration boundary, not a functioning Web backend.
+- No Web plugin execution, persistent plugin storage, authenticated command API, media proxy, or Pages deployment is implemented yet.
+- Build status: not verified in this environment. The new GitHub Actions workflow has been committed, but no run result has been observed yet.
+
+Next: audit every remaining Tauri-only import and host command, then implement and test the browser host API and isolated plugin runtime before enabling Pages.
