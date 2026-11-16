@@ -1,10 +1,10 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
+import { hostAdapter } from "./host/adapter";
 import { platform } from "./environment";
 
 /** Rotate the Android activity itself; browser-only playback uses the Screen API. */
 export async function setMobileOrientation(landscape: boolean): Promise<void> {
-  if (platform === "android" && isTauri()) {
-    await invoke("set_orientation", { landscape });
+  if (platform === "android" && hostAdapter.kind === "tauri") {
+    await hostAdapter.invoke("set_orientation", { landscape });
     return;
   }
   const orientation = screen.orientation as ScreenOrientation & { lock?: (value: string) => Promise<void> };
