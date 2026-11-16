@@ -4,16 +4,28 @@
 <body>
   <pre id="result">running</pre>
   <script type="module">
-    import { evaluateQuickJs } from "../src/host/web/quickjsRuntime.ts";
+    import { evaluateQuickJs, evaluateHppModule } from "../src/host/web/quickjsRuntime.ts";
     const output = document.querySelector("#result");
     try {
       const basic = await evaluateQuickJs("40 + 2");
       if (basic.value !== 42) throw new Error("basic evaluation did not return 42");
+      const module = await evaluateHppModule(
+        'import { makeId } from "./helpers.js"; export const meta = { id: makeId(), kind: "resolver" }; export default function factory() { return {}; }',
+        { "./helpers.js": 'export const makeId = () => "smoke-resolver";' },
+      );
+      if (module.exports?.meta?.id !== "smoke-resolver") throw new Error("HPP module import/export failed");
+      let denied = false;
+      try {
+        await evaluateHppModule('import "./not-allowed.js"; export const meta = {}; export default () => ({});');
+      } catch (error) {
+        denied = /allowlisted|not found|module/i.test(String(error?.message || error));
+      }
+      if (!denied) throw new Error("unlisted HPP module import was not denied");
       let interrupted = false;
       try { await evaluateQuickJs("while (true) {}", { timeoutMs: 100 }); }
       catch (error) { interrupted = /interrupt|timeout|InternalError/i.test(String(error?.message || error)); }
       if (!interrupted) throw new Error("infinite loop was not interrupted");
-      output.textContent = "PASS: result=42; infinite loop interrupted";
+      output.textContent = "PASS: eval; HPP module imports; import allowlist; interrupt";
       document.documentElement.dataset.result = "pass";
     } catch (error) {
       output.textContent = "FAIL: " + String(error?.stack || error);
