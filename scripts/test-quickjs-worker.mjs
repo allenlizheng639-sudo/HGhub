@@ -18,7 +18,7 @@ try {
   const page = await browser.newPage();
   page.on("console", message => { if (message.type() === "error") process.stderr.write(message.text() + "\\n"); });
   await page.goto("http://127.0.0.1:1420/tests/quickjs-worker-smoke.html");
-  await page.waitForFunction(() => document.documentElement.dataset.result === "pass" || document.documentElement.dataset.result === "fail", { timeout: 15000 });
+  await page.waitForFunction(() => document.documentElement.dataset.result === "pass" || document.documentElement.dataset.result === "fail", undefined, { timeout: 15000 });
   const result = await page.locator("#result").textContent();
   if (!result?.startsWith("PASS:")) throw new Error(result || "QuickJS smoke test failed");
   process.stdout.write(result + "\\n");
