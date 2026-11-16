@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { hostAdapter } from "../host/adapter";
 import { probeMediaCapabilities } from "./mediaCapabilities";
 import type { PlaybackInfo, PlaybackServer, PluginFailure, PluginMeta, Codec, MediaFormat } from "./protocol";
 
@@ -26,7 +26,7 @@ const authSuccessListeners = new Set<(id: string) => void>();
 let mediaReady: Promise<unknown> | undefined;
 function ensureMediaCapabilities() {
   // All first-use requests share registration; retry a failed IPC on the next action.
-  return mediaReady ??= invoke("hpp_manage", { action: "host.media.configure", params: probeMediaCapabilities() }).catch(error => {
+  return mediaReady ??= hostAdapter.invoke("hpp_manage", { action: "host.media.configure", params: probeMediaCapabilities() }).catch(error => {
     mediaReady = undefined;
     throw error;
   });
