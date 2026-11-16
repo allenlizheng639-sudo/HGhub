@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QuickJS Worker smoke test</title></head>
+<body>
+  <pre id="result">running</pre>
+  <script type="module">
+    import { evaluateQuickJs } from "../src/host/web/quickjsRuntime.ts";
+    const output = document.querySelector("#result");
+    try {
+      const basic = await evaluateQuickJs("40 + 2");
+      if (basic.value !== 42) throw new Error("basic evaluation did not return 42");
+      let interrupted = false;
+      try { await evaluateQuickJs("while (true) {}", { timeoutMs: 100 }); }
+      catch (error) { interrupted = /interrupt|timeout|InternalError/i.test(String(error?.message || error)); }
+      if (!interrupted) throw new Error("infinite loop was not interrupted");
+      output.textContent = "PASS: result=42; infinite loop interrupted";
+      document.documentElement.dataset.result = "pass";
+    } catch (error) {
+      output.textContent = "FAIL: " + String(error?.stack || error);
+      document.documentElement.dataset.result = "fail";
+    }
+  </script>
+</body>
+</html>
