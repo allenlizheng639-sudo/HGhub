@@ -93,3 +93,14 @@ Next: finish the remaining Tauri-only import/command audit and native regression
 - CI verified the production build for commit `426faacb59150fa4018d483e22333a23167f7850` after dependency/lockfile generation. This is a build check, not a Safari runtime test.
 - The build workflow has been restored to `pnpm install --frozen-lockfile`; lockfile reproducibility is checked again on each push.
 - Still not implemented: HPP prelude and module factory, native sync bridge, async request/response bridge, provider-scoped storage/Cookies, media/session proxy, and plugin lifecycle integration. The QuickJS spike remains disconnected from production `pluginCommand`.
+
+
+### QuickJS browser module loading (2026-11-16)
+
+- The browser Worker now has a separate ES-module evaluation path using a QuickJS runtime/context rather than the one-shot `evalCode` shortcut.
+- Module imports are resolved only from an explicit caller-provided source map. Missing imports fail closed; no URL, CDN, filesystem, DOM, or ambient host module loader is exposed.
+- Added `evaluateHppModule` as an isolated module-evaluation primitive with bounded source/dependency sizes, QuickJS memory/stack limits, an interrupt deadline, and parent Worker termination.
+- Chromium smoke coverage now checks basic evaluation, static ES-module import/export, rejection of an unlisted import, and infinite-loop interruption.
+- GitHub Actions run 43890353679 for the module-loader implementation: **success** (production build and browser smoke test).
+- The expanded test for the full import-allowlist behavior is queued/running separately; do not treat it as passed until its run is green.
+- This is still only the module-loader foundation. The HPP prelude, module factory install/invoke lifecycle, sync native APIs, async request/cancellation bridge, plugin storage/Cookies, and authenticated network/media service are not connected to the app.
