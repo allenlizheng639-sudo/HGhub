@@ -1,6 +1,6 @@
 # HGhubX Web 迁移实施计划
 
-> 状态：技术拆解阶段。此文档不是已完成的 Web 版，也不代表 Pages 或 Worker 已部署。
+> 状态：阶段 A 前端边界改造进行中。此文档不是已完成的 Web 版，也不代表 Pages 或 Worker 已部署。
 
 ## 目标
 
@@ -66,6 +66,14 @@
 - Build status: not verified in this environment. The new GitHub Actions workflow has been committed, but no run result has been observed yet.
 
 Next: audit every remaining Tauri-only import and host command, then implement and test the browser host API and isolated plugin runtime before enabling Pages.
+
+### Host boundary follow-up (2026-11-16)
+
+- Routed startup diagnostics through `HostAdapter`; browser mode no longer attempts the native debug-log command.
+- Browser mode now skips native `app_boot` security initialization and reports that server-side security settings are not yet available rather than calling a missing native command.
+- Android back-button listener loading is now lazy and guarded by `hostAdapter.kind === "tauri"`; Safari no longer imports or initializes the Tauri app listener. The browser back action also no longer attempts to exit a native app.
+- GitHub Actions run for commit `404de3252c1369a13994378be068137c5bb1ef81`: **success** (`pnpm install --frozen-lockfile` and `pnpm build`).
+- This is still a frontend compatibility milestone only. The full IPC call-site audit, native build regression check, Web plugin runtime, Worker API, media proxy, and Safari playback validation remain outstanding.
 
 ### Frontend build verification
 
