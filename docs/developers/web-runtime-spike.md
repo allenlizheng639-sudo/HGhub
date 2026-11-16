@@ -37,6 +37,18 @@ Web 版优先采用 `quickjs-emscripten`（QuickJS 编译为 WebAssembly）作�
 
 因此 Web 版必须把 HPP prelude 的同步 native bridge 与异步 request/response 消息通道一起移植。仅把 Rust 的网络请求换成浏览器 `fetch`，会丢失 provider Cookie 隔离、重定向/目标校验、请求速率、取消和媒体资源会话语义。
 
+## 已提交的隔离执行 spike（2026-11-16）
+
+新增：
+- `src/host/web/quickjsRuntime.ts`：每次评估启动独立 Worker，输入长度限制 2 MiB，执行超时后终止 Worker；默认内存限制 64 MiB、栈限制 1 MiB。
+- `src/host/web/quickjs.worker.ts`：只允许从当前站点同源地址加载 QuickJS 模块，在 WASM QuickJS 中执行源码；不把插件源码放进页面主线程，也不向 QuickJS 暴露 DOM、fetch 或宿主桥接函数。
+
+**部署前置条件：** 当前代码默认从 `<BASE_URL>/vendor/quickjs-emscripten.mjs` 加载一个同源 ESM wrapper。该 wrapper 需要由锁定版本的 QuickJS 包构建，导出 `getQuickJS()`；建议基于 `quickjs-emscripten@0.32.0` 的 RELEASE_SYNC 变体，构建时将 WASM 单文件变体一起打包，避免运行时依赖第三方 CDN。相关包与版本见 npm 官方说明：
+- https://www.npmjs.com/package/quickjs-emscripten
+- https://www.npmjs.com/package/@jitl/quickjs-singlefile-browser-release-sync
+
+目前该 vendored wrapper 尚未加入仓库，因此 spike 不能在真实页面中启动；也没有把它接入 HPP 插件系统。它目前只覆盖“在隔离 Worker 内用 QuickJS 执行简单脚本”的验证入口，尚不支持 HPP ES module factory、prelude、Promise/native bridge 或插件生命周期。需要先固定并纳入 WASM 依赖，再通过 CI 和 Safari 真机测试验证。
+
 ## 必须验证的兼容性风险
 
 1. 现有插件依赖的 JS 语言特性、模块格式、全局对象与 QuickJS WASM 版本是否一致。
