@@ -1,5 +1,5 @@
-type Request = { id: string; moduleUrl: string; source: string; timeoutMs: number; memoryLimitBytes: number; maxStackSizeBytes: number };
-type WorkerPort = { onmessage: ((event: MessageEvent<Request>) => void) | null; postMessage(value: unknown): void };
+type QuickJsRequest = { id: string; moduleUrl: string; source: string; timeoutMs: number; memoryLimitBytes: number; maxStackSizeBytes: number };
+type WorkerPort = { onmessage: ((event: MessageEvent<QuickJsRequest>) => void) | null; postMessage(value: unknown): void };
 const port = self as unknown as WorkerPort;
 
 port.onmessage = async (event) => {
