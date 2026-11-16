@@ -80,7 +80,7 @@ function ArticleHtml({ plugin, html }: { plugin: InstalledPlugin; html: string }
     if (typeof node === "string") return node;
     if (node.tag === "img") return urls[node.image!] ? <img key={key} src={urls[node.image!]} alt={node.alt} loading="lazy"/> : null;
     if (node.tag === "br" || node.tag === "hr") return createElement(node.tag, { key });
-    if (node.tag === "a") return node.href ? <a key={key} href={node.href} onClick={e => { e.preventDefault(); void openPluginLink(node.href!).catch(e => setError(pluginError(e))); }}>{render(node.children, key)}</a> : <span key={key}>{render(node.children, key)}</span>;
+    if (node.tag === "a") return node.href ? <a key={key} href={node.href} onClick={(e: React.MouseEvent<HTMLAnchorElement>) => { e.preventDefault(); void openPluginLink(node.href!).catch(e => setError(pluginError(e))); }}>{render(node.children, key)}</a> : <span key={key}>{render(node.children, key)}</span>;
     return createElement(node.tag, { key }, render(node.children, key));
   });
   return <><Notice error={error}/><div className="hpp-article-html">{render(tree.nodes)}</div></>;
