@@ -21,8 +21,14 @@ function useApplication() {
     document.documentElement.classList.toggle("theme-light", theme === "light"); document.documentElement.style.colorScheme = theme;
     try { localStorage.setItem("hpp.theme", JSON.stringify(theme)); localStorage.setItem("hpp.startMuted", JSON.stringify(muteOnStartup)); localStorage.setItem("hpp.volume", JSON.stringify(volume)); } catch { setError("无法保存应用偏好"); }
   }, [theme, muteOnStartup, volume]);
-  useEffect(() => { void hostAdapter.invoke<{strict_security:boolean}>("app_boot").then(v => { setStrict(v.strict_security); setSecurityReady(true); }).catch(() => setError("无法读取网络设置")); }, []);
-  const setStrictSecurity = useCallback(async (strict: boolean) => { setPending(true); try { setStrict(await hostAdapter.invoke<boolean>("security_set", { strict })); } finally { setPending(false); } }, []);
+  useEffect(() => {
+    if (hostAdapter.kind === "web") { setSecurityReady(true); return; }
+    void hostAdapter.invoke<{strict_security:boolean}>("app_boot").then(v => { setStrict(v.strict_security); setSecurityReady(true); }).catch(() => setError("无法读取网络设置"));
+  }, []);
+  const setStrictSecurity = useCallback(async (strict: boolean) => {
+    if (hostAdapter.kind === "web") { setError("Web 版网络安全设置尚未接入服务端"); return; }
+    setPending(true); try { setStrict(await hostAdapter.invoke<boolean>("security_set", { strict })); } finally { setPending(false); }
+  }, []);
   const setTab = useCallback((tab: Tab) => { setTabRaw(tab); setStack([]); }, []);
   const push = useCallback((p: PageInput) => setStack(old => [...old, { ...p, key: crypto.randomUUID() }]), []);
   const replace = useCallback((p: PageInput) => setStack(old => [...old.slice(0, -1), { ...p, key: crypto.randomUUID() }]), []);
