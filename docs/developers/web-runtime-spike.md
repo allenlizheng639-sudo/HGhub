@@ -41,13 +41,14 @@ Web 版优先采用 `quickjs-emscripten`（QuickJS 编译为 WebAssembly）作�
 
 新增：
 - `src/host/web/quickjsRuntime.ts`：每次评估启动独立 Worker，输入长度限制 2 MiB，执行超时后终止 Worker；默认内存限制 64 MiB、栈限制 1 MiB。
-- `src/host/web/quickjs.worker.ts`：只允许从当前站点同源地址加载 QuickJS 模块，在 WASM QuickJS 中执行源码；不把插件源码放进页面主线程，也不向 QuickJS 暴露 DOM、fetch 或宿主桥接函数。
+- `src/host/web/quickjs.worker.ts`：通过锁定依赖 `quickjs-emscripten@0.32.0` 在独立 Worker 中初始化 QuickJS WASM；不把插件源码放进页面主线程，也不向 QuickJS 暴露 DOM、fetch 或宿主桥接函数。
 
-**部署前置条件：** 当前代码默认从 `<BASE_URL>/vendor/quickjs-emscripten.mjs` 加载一个同源 ESM wrapper。该 wrapper 需要由锁定版本的 QuickJS 包构建，导出 `getQuickJS()`；建议基于 `quickjs-emscripten@0.32.0` 的 RELEASE_SYNC 变体，构建时将 WASM 单文件变体一起打包，避免运行时依赖第三方 CDN。相关包与版本见 npm 官方说明：
+**依赖集成进展：** 已将 `quickjs-emscripten@0.32.0` 固定到 `package.json`，并通过 GitHub Actions 生成并提交 `pnpm-lock.yaml`。该包的浏览器构建使用内嵌 WASM 的浏览器 ESM 变体，Vite 会将运行时代码打包进 Worker，不依赖第三方 CDN 或手工维护的 vendor wrapper。npm 包说明和 QuickJS API：
 - https://www.npmjs.com/package/quickjs-emscripten
 - https://www.npmjs.com/package/@jitl/quickjs-singlefile-browser-release-sync
+- https://github.com/justjake/quickjs-emscripten/blob/main/doc/quickjs-emscripten-core/classes/QuickJSRuntime.md
 
-目前该 vendored wrapper 尚未加入仓库，因此 spike 不能在真实页面中启动；也没有把它接入 HPP 插件系统。它目前只覆盖“在隔离 Worker 内用 QuickJS 执行简单脚本”的验证入口，尚不支持 HPP ES module factory、prelude、Promise/native bridge 或插件生命周期。需要先固定并纳入 WASM 依赖，再通过 CI 和 Safari 真机测试验证。
+当前已接入真实的 `getQuickJS().evalCode()`，并设置内存、栈和中断限制。**仍然只是独立脚本 smoke-test 入口**：尚未在 Safari 真机执行；尚未实现 HPP ES module factory、prelude、Promise/native bridge、插件生命周期或宿主请求代理。不能据此认为现有 HGhub 插件已能运行。
 
 ## 必须验证的兼容性风险
 
@@ -60,7 +61,7 @@ Web 版优先采用 `quickjs-emscripten`（QuickJS 编译为 WebAssembly）作�
 
 ## 下一步实现顺序
 
-1. 增加独立的 runtime spike package / Worker，不接入生产 UI。
+1. 已增加独立 runtime Worker 并固定 QuickJS WASM 依赖；尚未接入生产 UI。
 2. 用固定 fixture 验证同步函数、Promise、模块导入白名单、Uint8Array、RSA/AES 与取消。
 3. 加入 64 MiB/1 MiB/1 秒资源限制测试，并验证死循环会导致 Worker 被可靠终止。
 4. 对比原生 HPP fixture 测试结果；全部通过后才将 runtime 接入 `pluginCommand` 的 Web host。
@@ -68,4 +69,4 @@ Web 版优先采用 `quickjs-emscripten`（QuickJS 编译为 WebAssembly）作�
 
 ## 当前状态
 
-这是技术选型和验证清单，不是已经实现的 Web 插件运行时。仓库尚未添加 QuickJS WASM 依赖，也没有完成插件执行或 iPhone Safari 内存测试。
+QuickJS WASM 依赖已加入且前端生产构建通过；独立 Worker 的简单脚本执行入口已实现。HPP 插件兼容层、浏览器运行时行为测试和 iPhone Safari 内存/执行测试尚未完成，因此当前仍不是可用的 Web 插件运行时。
