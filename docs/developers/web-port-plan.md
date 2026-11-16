@@ -66,3 +66,10 @@
 - Build status: not verified in this environment. The new GitHub Actions workflow has been committed, but no run result has been observed yet.
 
 Next: audit every remaining Tauri-only import and host command, then implement and test the browser host API and isolated plugin runtime before enabling Pages.
+
+### Frontend build verification
+
+- GitHub Actions run for commit `2f1dd82038346cb0b430f1b9716da1709f7b204e`: **success**.
+- `pnpm install --frozen-lockfile` and `pnpm build` both completed successfully.
+- This verifies TypeScript compilation and the existing Vite production bundle only; it does not verify browser host features, plugin execution, or media playback.
+- The first CI attempt exposed two missed `invoke` call sites and two existing implicit-event typing errors. Those were corrected, and the latest run is green.
